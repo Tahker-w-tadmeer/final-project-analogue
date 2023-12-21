@@ -1,0 +1,11 @@
+[y,fs]=audioread('eric.wav');
+Y=fftshift(fft(y));
+f=linspace(-fs/2,fs/2,length(Y));
+%%plot the spectrum
+plot(f,abs(Y));
+title('spectrum of m');
+%apply filter
+filt=ones(size(Y));
+filt(f>4000)=0;
+y_filter=Y.*filter;
+plot(f,y
