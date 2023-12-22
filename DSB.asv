@@ -40,29 +40,21 @@ carrier=Ac.*cos(2*pi*fc*t1);
 DSB_SC=resampled_signal.*carrier;
 DSB_TC=(1+U*resampled_signal/Am).*carrier;
 DSB_SC_spectrum = fftshift(fft(DSB_SC));
-f_DSB_SC=new_fs/2*linspace(-1,1,length(DSB_SC));
+f_DSB_SC=new_fs/2*linspace(-1,1,length(
 % Plot DSB-TC spectrum
-figure();
-subplot(1,2,1)
 plot(f_DSB_SC, abs(DSB_TC_spectrum));
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 title('DSB-TC Modulated Signal Spectrum');
-DSB_TC_spectrum = fftshift(fft(DSB_TC));
-f_DSB_TC=new_fs/2*linspace(-1,1,length(DSB_TC));
+
+
 % Plot DSB-SC spectrum
-subplot(1,2,2)
-plot(f_DSB_TC, abs(DSB_SC_spectrum));
+plot(f, abs(DSB_SC_spectrum));
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 title('DSB-SC Modulated Signal Spectrum');
-%envelop detection for DSB_SC
-envelope_DSB_SC = abs(hilbert(DSB_SC));
-figure; 
-plot(t1, DSB_SC);
-hold on;
-plot(t1,-envelope_DSB_SC,'r-',t1, envelope_DSB_SC,'-r','Linewidth',1.5); 
-hold off;
-title('DSB_sc with envellop ');
-ylim([-2 2])
-xlim([2 2.5])
+
+
+
+
+
