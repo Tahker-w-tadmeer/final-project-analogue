@@ -26,12 +26,10 @@ max_val = max(abs(y_filtered_time));
 if max_val > 1
     y_filtered_time = y_filtered_time / max_val;
 end
-
-sound(y_filtered_time, fs);
 fc=10e3;
 U=0.5;
 Am=max(y_filtered_time);
-Ac=Am/U;
+Ac=Am/U;%modulationindex=Am/Ac
 new_fs=5*fc;
 resampled_signal=resample(y_filtered_time,new_fs,fs);
 t1=linspace(0,length(resampled_signal)/new_fs,length(resampled_signal));
@@ -56,13 +54,35 @@ plot(f_DSB_TC, abs(DSB_SC_spectrum));
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 title('DSB-SC Modulated Signal Spectrum');
-%envelop detection for DSB_SC
+%envelop  for DSB_SC
 envelope_DSB_SC = abs(hilbert(DSB_SC));
 figure; 
 plot(t1, DSB_SC);
 hold on;
 plot(t1,-envelope_DSB_SC,'r-',t1, envelope_DSB_SC,'-r','Linewidth',1.5); 
 hold off;
-title('DSB_sc with envellop ');
+title('DSB_sc with envellope');
 ylim([-2 2])
 xlim([2 2.5])
+%envelop for dsb-tc
+envelope_DSB_TC = abs(hilbert(DSB_TC));
+figure; 
+plot(t1, DSB_TC);
+hold on;
+plot(t1,-envelope_DSB_TC,'r-',t1, envelope_DSB_TC,'-r','Linewidth',1.5); 
+hold off;
+title('DSB_Tc with envellope');
+ylim([-2 2])
+xlim([2 2.5])
+%resample the envelope DSB_SC to hear it
+recived_sig_DSB_SC=resample(envelope_DSB_SC,fc,fs);
+%resample the envelope DSB_TC to hear it
+recived_sig_DSB_TC=resample(envelope_DSB_TC,fc,fs);
+%sound the three msgs
+sounds={y_filtered_time,envelope_DSB_SC,envelope_DSB_TC};
+for i = 1:length(sounds)
+    sound(sounds{i}, fs);
+    pause(10); 
+end
+
+
