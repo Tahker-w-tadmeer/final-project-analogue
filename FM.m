@@ -26,7 +26,7 @@ max_val = max(abs(y_filtered_time));
 if max_val > 1
     y_filtered_time = y_filtered_time / max_val;
 end
-fc = 10000;
+fc = 10e3;
 U = 0.5;
 Am = max(y_filtered_time);
 Ac = Am/U; %modulationindex = Am/Ac
@@ -35,11 +35,11 @@ new_fs = 5 * fc;
 resampled_signal = resample(y_filtered_time, new_fs, fs);
 t1 = linspace(0, length(resampled_signal) / new_fs, length(resampled_signal));
 t1 = t1';
-carrier = Ac .* cos(2 * pi * fc * t1);
-DSB_SC = resampled_signal .* carrier;
+carrier = Ac .* cos(2*pi*fc*t1);
+DSB_SC = resampled_signal.*carrier;
 DSB_TC = (1 + U * resampled_signal / Am) .* carrier;
 DSB_SC_spectrum = fftshift(fft(DSB_SC));
-f_DSB_SC = new_fs/2*linspace(-1, 1, length(DSB_SC));
+f_DSB_SC = new_fs/2*linspace(-1,1,length(DSB_SC));
 
 
 % Plot DSB-TC spectrum
@@ -92,7 +92,5 @@ for i = 1:length(sounds)
     sound(sounds{i}, fs);
     pause(10); 
 end
-
-
 
 
