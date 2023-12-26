@@ -1,13 +1,14 @@
 %% 1-2. Same as DSB
 
 [y, fs] = audioread('eric.wav');
+L = length(y);
 Y = fftshift(fft(y));
-f = linspace(-fs/2, fs/2, length(Y));
+f = linspace(-fs/2, fs/2, L);
 
 % Plot the spectrum
 figure;
 subplot(2, 1, 1);
-plot(f, abs(Y));
+plot(f, abs(Y) / L);
 title('Original Spectrum of m');
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
@@ -17,16 +18,18 @@ bw = 4000;
 Y(f >= bw | f <= -bw) = 0;
 
 subplot(2, 1, 2);
-plot(f, abs(Y) / length(y));
+plot(f, abs(Y) / L);
 title('Filtered Spectrum of m');
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 
 %% 3. Filtered signal in time domain (Inverse transform)
-y_filtered_time = double(real(ifft(ifftshift(Y))));
+y_filtered_time = ifft(ifftshift(Y));
 
 t1 = linspace(0, length(y_filtered_time) / fs, length(y_filtered_time));
 t1 = t1';
+
+y_filtered_time = real(double(y_filtered_time));
 
 figure; plot(t1, y_filtered_time);
 title('Filtered Signal of m Time Domain');
@@ -38,9 +41,12 @@ U = 0.5;
 Am = max(y_filtered_time);
 Ac = Am/U; % modulationindex = Am/Ac
 new_fs = 5 * fc;
-fs = new_fs;
+
 
 %% 4. Plot DSB-SC spectrum
+message_for_sound = resample(y_filtered_time, new_fs, fs);
+% sound(abs(message_for_sound), fs);
+
 message = resample(y_filtered_time, new_fs, fs);
 t1 = linspace(0, length(message) / new_fs, length(message));
 t1 = t1';
@@ -65,21 +71,18 @@ f = new_fs / 2 * linspace(-1, 1, L);
 F = fftshift(fft(SSB_LSB));
 F(f>=fc | f<=-fc) = 0;
 SSB_LSB = ifft(ifftshift(F));
-SSB_LSB_spectrum = fft(fftshift(SSB_LSB));
-
-f_SSB_LSB = new_fs / 2 * linspace(-1, 1, length(SSB_LSB));
 
 % Plot SSB_LSB spectrum
 subplot(2, 1, 2);
-plot(f_SSB_LSB, abs(SSB_LSB_spectrum) / L);
+plot(f, abs(F) / L);
 title('SSB LSB Modulated Signal Spectrum');
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 %% 6. Coherent detection with no noise interference
-demodulated_signal_ideal = SSB_LSB .* carrier;
+demodulated_signal_ideal = SSB_LSB .* cos(2*pi*fc*t1);
 
 demodulated_signal_ideal = fftshift(fft(demodulated_signal_ideal));
-demodulated_signal_ideal(f >= bw | f <= -bw) = 0;
+demodulated_signal_ideal(f >= fc | f <= -fc) = 0;
 demodulated_signal_ideal = ifft(ifftshift(demodulated_signal_ideal));
 
 % Plot received waveform and spectrum
@@ -90,15 +93,16 @@ xlabel('Time (s)');
 ylabel('Amplitude');
 
 % Spectrum of received signal
+L = length(demodulated_signal_ideal);
 Y_demodulated_ideal = fftshift(fft(demodulated_signal_ideal));
-f_demodulated_ideal = linspace(-new_fs/2, new_fs/2, length(Y_demodulated_ideal));
+f_demodulated_ideal = linspace(-new_fs/2, new_fs/2, L);
 
 subplot(2, 1, 2);
 plot(f_demodulated_ideal, abs(Y_demodulated_ideal) / L);
 title('Spectrum of Received Signal (CD)');
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
-
+xlim([-10000 10000]);
 %% 7. Repeat steps 5 and 6 with Butterworth filter
 [b, a] = butter(4, fc / (new_fs / 2), 'low');
 SSB_LSB_butter = filtfilt(b, a, demodulated_signal_ideal);
@@ -141,20 +145,27 @@ snr_values = [0, 10, 30];
 for snr_dB = snr_values
     % Add noise to SSB-SC
     noisy_SSB_SC = awgn(SSB_LSB, snr_dB);
+    demodulated_noisy = noisy_SSB_SC .* cos(2*pi*fc*t1);
     
     % Coherent detection with noise
-    demodulated_noisy_signal = double(real(noisy_SSB_SC .* carrier));
+    demodulated_noisy = double(real(demodulated_noisy));
+    demodulated_noisy = fftshift(fft(demodulated_noisy));
+    demodulated_noisy(f >= bw | f <= -bw) = 0;
+    demodulated_noisy = ifft(ifftshift(demodulated_noisy));
+    
+    f = new_fs / 2 * linspace(-1,1,L);
+    L = length(demodulated_noisy);
 
     % Plot received waveform and spectrum for each SNR value
     figure;
     subplot(2, 1, 1);
-    plot(t, demodulated_noisy_signal);
+    plot(t, demodulated_noisy);
     title(['Received Signal with SNR = ' num2str(snr_dB) ' dB - Time Domain']);
     xlabel('Time (s)');
     ylabel('Amplitude');
 
     subplot(2, 1, 2);
-    plot(f_demodulated_ideal, abs(fftshift(fft(demodulated_noisy_signal))));
+    plot(f, abs(fftshift(fft(demodulated_noisy))) / L);
     title(['Spectrum with SNR = ' num2str(snr_dB) ' dB']);
     xlabel('Frequency (Hz)');
     ylabel('Magnitude');
@@ -179,7 +190,7 @@ ylim([-5 5]);
 xlim([3 3.5]);
 % Spectrum of received signal
 Y_SSB_TC = fftshift(fft(SSB_TC));
-f_SSB_TC = linspace(-fs/2, fs/2, length(Y_SSB_TC));
+f_SSB_TC = linspace(-new_fs/2, new_fs/2, length(Y_SSB_TC));
 
 figure;
 plot(f_SSB_TC, abs(Y_SSB_TC));

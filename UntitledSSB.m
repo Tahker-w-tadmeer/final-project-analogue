@@ -56,6 +56,16 @@ t1 = t1';
 % DSBSC generation
 carrier_signal = Ac .* cos(2*pi*fc*t1);
 DSBSC=y.*carrier_signal;
+DSB_SC_spectrum = fftshift(fft(DSBSC));
+f_DSB_SC = Fs / 2 * linspace(-1, 1, length(DSBSC));
+
+figure;
+subplot(2, 1, 1);
+plot(f_DSB_SC, abs(DSB_SC_spectrum) / L);
+title('DSB-SC Modulated Signal Spectrum');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
+
 % SSBLSB generation by filtering DSBSC
 
 SSBLSB = DSBSC;
@@ -64,7 +74,8 @@ f = Fs/2*linspace(-1,1,L);
 F = fftshift(fft(SSBLSB));  %fourier transform
 F(f>=fc | f<=-fc) = 0;  %filter (SSB in freq domain)
 SSBLSB = ifft(ifftshift(F));  % SSB in time domain
-figure; plot(f, abs(F) / L); title('SSBLSB Frequency Domain');
+subplot(2, 1, 2);
+plot(f, abs(F) / L); title('SSB LSB Modulated Signal Spectrum');
 
 %% Coherent Detection SSBSC using ideal filter
 demodulated = SSBLSB .* cos(2*pi*fc*t1);
@@ -96,6 +107,7 @@ demodulated = resample(abs(demodulated), Fs/5, Fs);
 % Coherent Detection SSBSC using butter order = 4
 demodulated = SSBLSB.*cos(2*pi*fc*t1);
 [b,a] = butter(4,W*2/Fs);
+
 demodulated = filtfilt(b,a,demodulated);
 
 % plot demodulated signal in time domain
