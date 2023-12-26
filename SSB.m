@@ -163,7 +163,8 @@ title('Received Message with Envelope Detection');
 xlabel('Time (s)');
 ylabel('Amplitude');
 legend('SSB-TC', 'Envelope');
-
+ylim([-5 5])
+xlim([3 3.5])
 % Spectrum of received signal
 Y_SSB_TC = fftshift(fft(SSB_TC));
 f_SSB_TC = linspace(-fs/2, fs/2, length(Y_SSB_TC));
