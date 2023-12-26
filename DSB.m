@@ -156,13 +156,13 @@ for snr_dB = snr_values
     figure;
     subplot(2, 1, 1);
     plot(t1, demodulated_noisy);
-    title(['Received Signal with SNR = ' num2str(snr_dB) ' dB - Time Domain']);
+    title(['Received Signal with SNR (FE) = ' num2str(snr_dB) ' dB - Time Domain']);
     xlabel('Time (s)');
     ylabel('Amplitude');
 
     subplot(2, 1, 2);
     plot(f, abs(fftshift(fft(demodulated_noisy))) / L);
-    title(['Spectrum with SNR = ' num2str(snr_dB) ' dB']);
+    title(['Spectrum with SNR (FE) = ' num2str(snr_dB) ' dB']);
     xlabel('Frequency (Hz)');
     ylabel('Magnitude');
     
@@ -186,13 +186,13 @@ for snr_dB = snr_values
     figure;
     subplot(2, 1, 1);
     plot(t1, demodulated_noisy);
-    title(['Received Signal with SNR = ' num2str(snr_dB) ' dB - Time Domain']);
+    title(['Received Signal with SNR (PE) = ' num2str(snr_dB) ' dB - Time Domain']);
     xlabel('Time (s)');
     ylabel('Amplitude');
 
     subplot(2, 1, 2);
     plot(f, abs(fftshift(fft(demodulated_noisy))) / L);
-    title(['Spectrum with SNR = ' num2str(snr_dB) ' dB']);
+    title(['Spectrum with SNR (PE) = ' num2str(snr_dB) ' dB']);
     xlabel('Frequency (Hz)');
     ylabel('Magnitude');
     
