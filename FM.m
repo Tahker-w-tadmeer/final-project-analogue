@@ -1,60 +1,87 @@
-[y, fs] = audioread('eric.wav');
-Y = fftshift(fft(y));
-f = linspace(-fs/2, fs/2, length(Y));
+% 1. Read the audio file and find the spectrum
+[audio, Fs] = audioread('eric.wav');
+N = length(audio);
+t = (0:N-1) / Fs;
+
+% Calculate the spectrum
+audio_spectrum_shifted = fftshift(fft(audio));
 
 % Plot the spectrum
-plot(f, abs(Y));
-title('Spectrum of m');
-figure();
+figure;
+plot(linspace(-Fs/2, Fs/2, N), abs(audio_spectrum_shifted));
+title('Original Spectrum');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
 
-% Apply filter
-bw = 4000;
-filt = ones(size(Y));
-filt(f > bw|f<-bw) = 0;
-y_filter = Y .* filt;
-plot(f, y_filter);
-title('filtered signal spectrum');
-% Inverse transform
-y_filtered_time = ifft(ifftshift(y_filter));
+% 2. Ideal filter to remove frequencies above 4 KHz
+cutoff_frequency = 4000;
+filter = (abs(linspace(-Fs/2, Fs/2, N)) <= cutoff_frequency);
+audio_spectrum_filtered = audio_spectrum_shifted .* filter';
 
-% Ensure data type and scaling
-y_filtered_time = real(y_filtered_time); % Ensure real values
-y_filtered_time = double(y_filtered_time); % Convert to double if necessary
+% 3. Obtain filtered signal in time and frequency domain
+audio_filtered =real(ifft(ifftshift(audio_spectrum_filtered)));
 
-% Normalize if values are outside the range [-1, 1]
-max_val = max(abs(y_filtered_time));
-if max_val > 1
-    y_filtered_time = y_filtered_time / max_val;
-end
-fc = 10e3;
-U = 0.5;
-Am = max(y_filtered_time);
-Ac = Am/U; %modulationindex = Am/Ac
-new_fs = 5 * fc;
+% Plot the filtered spectrum
+figure;
+plot(linspace(-Fs/2, Fs/2, N), abs(audio_spectrum_filtered));
+title('Filtered Spectrum');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
 
-resampled_signal = resample(y_filtered_time, new_fs, fs);
-t1 = linspace(0, length(resampled_signal) / new_fs, length(resampled_signal));
+% Plot the filtered signal in time domain
+figure;
+plot(t, audio_filtered);
+title('Filtered Signal in Time Domain');
+xlabel('Time (s)');
+ylabel('Amplitude');
+
+% 4. Sound the filtered audio signal
+sound(abs(audio_filtered), Fs);
+
+% 5. Generate NBFM signal
+kf = 0.2/(2*pi*max(abs(cumsum(audio_filtered)))./Fs);
+Ac = 1;
+Fc = 100000; % Carrier frequency
+resampled_audio = resample(audio_filtered, 5*Fc, Fs);
+Fs_nbfm = 5 * Fc; % Sampling frequency for NBFM
+
+%calculate time vector
+tstart = 0;
+tend = tstart + length(resampled_audio) / Fs_nbfm;
+t1 = linspace(tstart, tend, length(resampled_audio));
 t1 = t1';
-carrier = Ac .* cos(2*pi*fc*t1);
-DSB_SC = resampled_signal.*carrier;
-DSB_TC = (1 + U * resampled_signal / Am) .* carrier;
-DSB_SC_spectrum = fftshift(fft(DSB_SC));
-f_DSB_SC = new_fs/2*linspace(-1,1,length(DSB_SC));
 
+%FM modulated signal
+NBFM_signal = Ac * cos(2*pi*Fc*t1 + 2*pi*kf*cumsum(resampled_audio)./Fs_nbfm);
 
-% Plot DSB-TC spectrum
-figure();
-subplot(1,2,1)
-plot(f_DSB_SC, abs(DSB_TC_spectrum));
+% Plot the NBFM spectrum
+L = length(NBFM_signal);
+NBFM_spectrum_shifted = real(fftshift(fft(NBFM_signal)));
+f = Fs/2*linspace(-1,1,L);
+figure;
+plot(f, NBFM_spectrum_shifted)
+title('NBFM Spectrum');
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
-title('DSB-TC Modulated Signal Spectrum');
-DSB_TC_spectrum = fftshift(fft(DSB_TC));
-f_DSB_TC=new_fs/2*linspace(-1,1,length(DSB_TC));
 
-% Plot DSB-SC spectrum
-subplot(1,2,2)
-plot(f_DSB_TC, abs(DSB_SC_spectrum));
-xlabel('Frequency (Hz)');
-ylabel('Magnitude');
-title('DSB-SC Modulated Signal Spectrum');
+% 6. Condition for NBFM: Frequency deviation (delta_f) should be much smaller than the message bandwidth (B)
+B = cutoff_frequency;
+delta_f = 75; % Frequency deviation
+condition = delta_f < B;
+disp(['Condition for NBFM: ', num2str(condition)]);
+
+% 7. Demodulate NBFM signal
+% Discriminator
+dy = diff(NBFM_signal);
+dy = [0; dy];
+
+% envelope detector
+demodulated_NBFM = abs(hilbert(dy)) -  mean(abs(hilbert(dy)));
+
+% Plot the time-domain signal
+figure;
+plot(t1,demodulated_NBFM);
+title('Demodulated NBFM Time-Domain Signal');
+xlabel('Time (s)');
+ylabel('Amplitude');
+ylim([-2*10^-4 2*10^-4]);
