@@ -159,7 +159,7 @@ for snr_dB = snr_values
     % Plot received waveform and spectrum for each SNR value
     figure;
     subplot(2, 1, 1);
-    plot(t, demodulated_noisy);
+    plot(t1, demodulated_noisy);
     title(['Received Signal with SNR = ' num2str(snr_dB) ' dB - Time Domain']);
     xlabel('Time (s)');
     ylabel('Amplitude');
@@ -171,29 +171,31 @@ for snr_dB = snr_values
     ylabel('Magnitude');
 end
 %% 9. For the ideal filter case, generate a SSB-TC
-SSB_TC = carrier + SSB_LSB_butter;
+SSB_TC = carrier + SSB_LSB;
+L = length(SSB_TC);
 
-% Envelope detection
-envelope_SSB_TC = abs(hilbert(SSB_TC));
+% Spectrum of received signal
+Y_SSB_TC = fftshift(fft(SSB_TC));
+f_SSB_TC = linspace(-new_fs/2, new_fs/2, length(Y_SSB_TC));
+
+figure;
+plot(f_SSB_TC, abs(Y_SSB_TC) / L);
+title('Spectrum of Received SSB-TC Signal');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
 
 % Playback received message
 % sound(envelope_SSB_TC, fs);
 
+% Envelope detection
+envelope_SSB_TC = abs(hilbert(SSB_TC));
+
 % Plot received waveform
 figure;
-plot(t, SSB_TC, 'b', t, -envelope_SSB_TC, 'r', t, envelope_SSB_TC, 'r', 'Linewidth', 1.5);
+plot(t1, SSB_TC, 'b', t1, -envelope_SSB_TC, 'r', t1, envelope_SSB_TC, 'r', 'Linewidth', 1.5);
 title('Received Message with Envelope Detection');
 xlabel('Time (s)');
 ylabel('Amplitude');
 legend('SSB-TC', 'Envelope');
 ylim([-5 5]);
 xlim([3 3.5]);
-% Spectrum of received signal
-Y_SSB_TC = fftshift(fft(SSB_TC));
-f_SSB_TC = linspace(-new_fs/2, new_fs/2, length(Y_SSB_TC));
-
-figure;
-plot(f_SSB_TC, abs(Y_SSB_TC));
-title('Spectrum of Received SSB-TC Signal');
-xlabel('Frequency (Hz)');
-ylabel('Magnitude');
