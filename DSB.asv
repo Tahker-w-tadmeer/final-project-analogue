@@ -135,9 +135,9 @@ for snr_dB = snr_values
     xlabel('Frequency (Hz)');
     ylabel('Magnitude');
     
-    demodulated_noisy_sound = resample(abs(demodulated_noisy), fs, new_fs);
-    sound(abs(demodulated_noisy_sound), fs);
-    pause(10);
+    %demodulated_noisy_sound = resample(abs(demodulated_noisy), fs, new_fs);
+    %sound(abs(demodulated_noisy_sound), fs);
+    %pause(10);
 end
 %% coherent detection with frequency error
 fc_error=100100;
@@ -166,38 +166,34 @@ for snr_dB = snr_values
     xlabel('Frequency (Hz)');
     ylabel('Magnitude');
     
-    demodulated_noisy_sound = resample(abs(demodulated_noisy), fs, new_fs);
-    sound(abs(demodulated_noisy_sound), fs);
-    pause(10);
+    %demodulated_noisy_sound = resample(abs(demodulated_noisy), fs, new_fs);
+    %sound(abs(demodulated_noisy_sound), fs);
+    %pause(10);
 end
 %% phase error
-for snr_dB = snr_values
-    % Add noise to DSB_SC
-    noisy_DSB_SC = awgn(DSB_SC, snr_dB);
-    demodulated_noisy = noisy_DSB_SC .* cos(2*pi*fc*t1+20);
-    f = new_fs / 2 * linspace(-1,1,length(DSB_SC));
-    % Coherent detection with noise
-    demodulated_noisy = double(real(demodulated_noisy));
-    demodulated_noisy = fftshift(fft(demodulated_noisy));
-    demodulated_noisy(f >= bw | f <= -bw) = 0;
-    demodulated_noisy = ifft(ifftshift(demodulated_noisy));
-    L = length(demodulated_noisy);
-    % Plot received waveform and spectrum for each SNR value
+for i = 1:length(snr)
+    noisy_signal = awgn(DSB_SC, snr(i));
+    
+    % Demodulation using coherent detection
+    demodulated = noisy_signal .* cos(2 * pi * fc * t1 +pi/9);
+    demodulated_FFT = fftshift(fft(demodulated));
+    demodulated_FFT(f >= bw | f <= -bw) = 0;
+    demodulated = ifft(ifftshift(demodulated_FFT));
+    
+    % Plot and playback demodulated signal
     figure;
     subplot(2, 1, 1);
-    plot(t1, demodulated_noisy);
-    title(['Received Signal with SNR = ' num2str(snr_dB) ' dB - Time Domain']);
-    xlabel('Time (s)');
-    ylabel('Amplitude');
-
-    subplot(2, 1, 2);
-    plot(f, abs(fftshift(fft(demodulated_noisy))) / L);
-    title(['Spectrum with SNR = ' num2str(snr_dB) ' dB']);
-    xlabel('Frequency (Hz)');
-    ylabel('Magnitude');
+    plot(t1, demodulated); 
+    title(['SNR demodulated signal with phase error in time domain = ' num2str(snr(i)) ' dB']);
     
-    demodulated_noisy_sound = resample(abs(demodulated_noisy), fs, new_fs);
-    sound(abs(demodulated_noisy_sound), fs);
-    pause(10);
+    % Plot demodulated signal in frequency domain
+    F = fftshift(fft(demodulated));
+    f = new_fs / 2 * linspace(-1, 1, length(demodulated));
+    subplot(2, 1, 2);
+    plot(f, abs(F) / length(demodulated));
+    title(['SNR demodulated signal with phase error in frequency domain = ' num2str(snr(i)) ' dB']);
+    % Sound playback of the demodulated signal
+    sound(abs(demodulated), new_fs); 
+    pause(10); 
 end
 
