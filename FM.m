@@ -59,7 +59,7 @@ L = length(NBFM_signal);
 NBFM_spectrum_shifted = real(fftshift(fft(NBFM_signal)));
 f = Fs/2*linspace(-1,1,L);
 figure;
-plot(f, NBFM_spectrum_shifted)
+plot(f, NBFM_spectrum_shifted/L)
 title('NBFM Spectrum');
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
