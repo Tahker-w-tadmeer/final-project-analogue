@@ -26,7 +26,7 @@ max_val = max(abs(y_filtered_time));
 if max_val > 1
     y_filtered_time = y_filtered_time / max_val;
 end
-fc = 10000;
+fc = 100000;
 U = 0.5;
 Am = max(y_filtered_time);
 Ac = Am/U; %modulationindex = Am/Ac
