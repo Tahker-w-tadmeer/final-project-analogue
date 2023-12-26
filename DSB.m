@@ -133,7 +133,58 @@ for i = 1:length(snr)
     sound(abs(demodulated), new_fs); 
     pause(5); 
 end
-
-
+%% coherent detection with frequency error
+fc_error=100100;
+for i = 1:length(snr)
+    noisy_signal = awgn(DSB_SC, snr(i));
+    
+    % Demodulation using coherent detection
+    demodulated = noisy_signal .* cos(2 * pi * fc_error * t1);
+    demodulated_FFT = fftshift(fft(demodulated));
+    demodulated_FFT(f >= bw | f <= -bw) = 0;
+    demodulated = ifft(ifftshift(demodulated_FFT));
+    
+    % Plot and playback demodulated signal
+    figure;
+    subplot(2, 1, 1);
+    plot(t1, demodulated); 
+    title(['SNR demodulated signal in time domain = ' num2str(snr(i)) ' dB']);
+    
+    % Plot demodulated signal in frequency domain
+    F = fftshift(fft(demodulated));
+    f = new_fs / 2 * linspace(-1, 1, length(demodulated));
+    subplot(2, 1, 2);
+    plot(f, abs(F) / length(demodulated));
+    title(['SNR demodulated signal in frequency domain = ' num2str(snr(i)) ' dB']);
+    % Sound playback of the demodulated signal
+    sound(abs(demodulated), new_fs); 
+    pause(5); 
+end
+%% phase error
+for i = 1:length(snr)
+    noisy_signal = awgn(DSB_SC, snr(i));
+    
+    % Demodulation using coherent detection
+    demodulated = noisy_signal .* cos(2 * pi * fc * t1 +pi/9);
+    demodulated_FFT = fftshift(fft(demodulated));
+    demodulated_FFT(f >= bw | f <= -bw) = 0;
+    demodulated = ifft(ifftshift(demodulated_FFT));
+    
+    % Plot and playback demodulated signal
+    figure;
+    subplot(2, 1, 1);
+    plot(t1, demodulated); 
+    title(['SNR demodulated signal in time domain = ' num2str(snr(i)) ' dB']);
+    
+    % Plot demodulated signal in frequency domain
+    F = fftshift(fft(demodulated));
+    f = new_fs / 2 * linspace(-1, 1, length(demodulated));
+    subplot(2, 1, 2);
+    plot(f, abs(F) / length(demodulated));
+    title(['SNR demodulated signal in frequency domain = ' num2str(snr(i)) ' dB']);
+    % Sound playback of the demodulated signal
+    sound(abs(demodulated), new_fs); 
+    pause(5); 
+end
 
 

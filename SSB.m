@@ -59,38 +59,7 @@ xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 title('DSB-SC Modulated Signal Spectrum');
 
-%envelop for DSB-SC
-envelope_DSB_SC = abs(hilbert(DSB_SC));
-figure;
-plot(t1, DSB_SC);
-hold on;
-plot(t1,-envelope_DSB_SC,'r-',t1, envelope_DSB_SC,'-r','Linewidth',1.5); 
-hold off;
-title('DSB_sc with envellope');
-ylim([-2 2]);
-xlim([2 2.5]);
-
-%envelop for DSB-TC
-envelope_DSB_TC = abs(hilbert(DSB_TC));
-figure;
-plot(t1, DSB_TC);
-hold on;
-plot(t1, -envelope_DSB_TC ,'r-', t1, envelope_DSB_TC, '-r', 'Linewidth', 1.5); 
-hold off;
-title('DSB_Tc with envellope');
-ylim([-2 2]);
-xlim([2 2.5]);
 
 
-% resample the envelope DSB_SC to hear it
-recived_sig_DSB_SC = resample(envelope_DSB_SC, fc, fs);
-% resample the envelope DSB_TC to hear it
-recived_sig_DSB_TC = resample(envelope_DSB_TC, fc, fs);
-% sound the three msgs
-sounds={y_filtered_time,envelope_DSB_SC,envelope_DSB_TC};
-for i = 1:length(sounds)
-    sound(sounds{i}, fs);
-    pause(10); 
-end
 
 
