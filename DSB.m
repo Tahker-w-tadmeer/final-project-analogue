@@ -21,7 +21,7 @@ y_filtered_time = ifft(ifftshift(y_filter));
 y_filtered_time = real(y_filtered_time); % Ensure real values
 y_filtered_time = double(y_filtered_time); % Convert to double if necessary
 
-% Normalize if values are outside the range [-1, 1]
+%% Normalize if values are outside the range [-1, 1]
 max_val = max(abs(y_filtered_time));
 if max_val > 1
     y_filtered_time = y_filtered_time / max_val;
@@ -42,10 +42,10 @@ DSB_SC_spectrum = fftshift(fft(DSB_SC));
 f_DSB_SC = new_fs/2*linspace(-1, 1, length(DSB_SC));
 
 
-% Plot DSB-TC spectrum
+%% Plot DSB-TC spectrum
 figure();
 subplot(1,2,1)
-plot(f_DSB_SC, abs(DSB_TC_spectrum));
+plot(f_DSB_SC, abs(DSB_SC_spectrum));
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 title('DSB-TC Modulated Signal Spectrum');
@@ -59,7 +59,7 @@ xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 title('DSB-SC Modulated Signal Spectrum');
 
-%envelop for DSB-SC
+%% envelop for DSB-SC
 envelope_DSB_SC = abs(hilbert(DSB_SC));
 figure;
 plot(t1, DSB_SC);
@@ -82,15 +82,56 @@ ylim([-2 2]);
 xlim([2 2.5]);
 
 
+demod_DSB_SC=envelope_DSB_SC.*cos(2 * pi * fc * t1);
+%% plot demodi=ulation signal
+figure;
+subplot(2, 1, 1);
+plot(t1, envelope_DSB_TC);
+xlabel('Time');
+ylabel('Amplitude');
+title('Received Signal - DSB-TC');
+subplot(2, 1, 2);
+plot(t1, demod_DSB_SC);
+xlabel('Time');
+ylabel('Amplitude');
+title('Received Signal - DSB-SC');
 % resample the envelope DSB_SC to hear it
 recived_sig_DSB_SC = resample(envelope_DSB_SC, fc, fs);
 % resample the envelope DSB_TC to hear it
 recived_sig_DSB_TC = resample(envelope_DSB_TC, fc, fs);
-% sound the three msgs
+%% sound the three msgs
 sounds={y_filtered_time,envelope_DSB_SC,envelope_DSB_TC};
 for i = 1:length(sounds)
     sound(sounds{i}, fs);
     pause(10); 
+end
+
+%% Coherent detection
+snr = [0, 10, 30];
+for i = 1:length(snr)
+    noisy_signal = awgn(DSB_SC, snr(i));
+    
+    % Demodulation using coherent detection
+    demodulated = noisy_signal .* cos(2 * pi * fc * t1);
+    demodulated_FFT = fftshift(fft(demodulated));
+    demodulated_FFT(f >= bw | f <= -bw) = 0;
+    demodulated = ifft(ifftshift(demodulated_FFT));
+    
+    % Plot and playback demodulated signal
+    figure;
+    subplot(2, 1, 1);
+    plot(t1, demodulated); 
+    title(['SNR demodulated signal in time domain = ' num2str(snr(i)) ' dB']);
+    
+    % Plot demodulated signal in frequency domain
+    F = fftshift(fft(demodulated));
+    f = new_fs / 2 * linspace(-1, 1, length(demodulated));
+    subplot(2, 1, 2);
+    plot(f, abs(F) / length(demodulated));
+    title(['SNR demodulated signal in frequency domain = ' num2str(snr(i)) ' dB']);
+    % Sound playback of the demodulated signal
+    sound(abs(demodulated), new_fs); 
+    pause(5); 
 end
 
 
