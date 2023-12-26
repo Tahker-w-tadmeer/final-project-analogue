@@ -81,6 +81,9 @@ ylabel('Magnitude');
 %% 6. Coherent detection with no noise interference
 demodulated_signal_ideal = SSB_LSB .* cos(2*pi*fc*t1);
 
+demodulated_signal_ideal_sound = resample(abs(demodulated_signal_ideal), fs, new_fs);
+sound(abs(demodulated_signal_ideal_sound), fs);
+
 demodulated_signal_ideal = fftshift(fft(demodulated_signal_ideal));
 demodulated_signal_ideal(f >= fc | f <= -fc) = 0;
 demodulated_signal_ideal = ifft(ifftshift(demodulated_signal_ideal));
@@ -169,6 +172,9 @@ for snr_dB = snr_values
     title(['Spectrum with SNR = ' num2str(snr_dB) ' dB']);
     xlabel('Frequency (Hz)');
     ylabel('Magnitude');
+    
+    demodulated_noisy_sound = resample(abs(demodulated_noisy), fs, new_fs);
+    sound(abs(demodulated_noisy_sound), fs);
 end
 %% 9. For the ideal filter case, generate a SSB-TC
 SSB_TC = carrier + SSB_LSB;
@@ -184,9 +190,6 @@ title('Spectrum of Received SSB-TC Signal');
 xlabel('Frequency (Hz)');
 ylabel('Magnitude');
 
-% Playback received message
-% sound(envelope_SSB_TC, fs);
-
 % Envelope detection
 envelope_SSB_TC = abs(hilbert(SSB_TC));
 
@@ -199,3 +202,6 @@ ylabel('Amplitude');
 legend('SSB-TC', 'Envelope');
 ylim([-5 5]);
 xlim([3 3.5]);
+
+envelope_SSB_TC = resample(envelope_SSB_TC, fs, new_fs);
+sound(abs(envelope_SSB_TC), fs);

@@ -145,48 +145,57 @@ snr_values = [0, 10, 30];
 for snr_dB = snr_values
     % Add noise to SSB-SC
     noisy_SSB_SC = awgn(SSB_LSB, snr_dB);
+    demodulated_noisy = noisy_SSB_SC .* cos(2*pi*fc*t1);
     
     % Coherent detection with noise
-    demodulated_noisy_signal = double(real(noisy_SSB_SC .* cos(2*pi*fc*t1)));
+    demodulated_noisy = double(real(demodulated_noisy));
+    demodulated_noisy = fftshift(fft(demodulated_noisy));
+    demodulated_noisy(f >= bw | f <= -bw) = 0;
+    demodulated_noisy = ifft(ifftshift(demodulated_noisy));
+    
+    f = new_fs / 2 * linspace(-1,1,L);
+    L = length(demodulated_noisy);
 
     % Plot received waveform and spectrum for each SNR value
     figure;
     subplot(2, 1, 1);
-    plot(t, demodulated_noisy_signal);
+    plot(t1, demodulated_noisy);
     title(['Received Signal with SNR = ' num2str(snr_dB) ' dB - Time Domain']);
     xlabel('Time (s)');
     ylabel('Amplitude');
 
     subplot(2, 1, 2);
-    plot(f_demodulated_ideal, abs(fftshift(fft(demodulated_noisy_signal))));
+    plot(f, abs(fftshift(fft(demodulated_noisy))) / L);
     title(['Spectrum with SNR = ' num2str(snr_dB) ' dB']);
     xlabel('Frequency (Hz)');
     ylabel('Magnitude');
 end
 %% 9. For the ideal filter case, generate a SSB-TC
-SSB_TC = carrier + SSB_LSB_butter;
+SSB_TC = carrier + SSB_LSB;
+L = length(SSB_TC);
+
+% Spectrum of received signal
+Y_SSB_TC = fftshift(fft(SSB_TC));
+f_SSB_TC = linspace(-new_fs/2, new_fs/2, length(Y_SSB_TC));
+
+figure;
+plot(f_SSB_TC, abs(Y_SSB_TC) / L);
+title('Spectrum of Received SSB-TC Signal');
+xlabel('Frequency (Hz)');
+ylabel('Magnitude');
 
 % Envelope detection
 envelope_SSB_TC = abs(hilbert(SSB_TC));
 
-% Playback received message
-% sound(envelope_SSB_TC, fs);
-
 % Plot received waveform
 figure;
-plot(t, SSB_TC, 'b', t, -envelope_SSB_TC, 'r', t, envelope_SSB_TC, 'r', 'Linewidth', 1.5);
+plot(t1, SSB_TC, 'b', t1, -envelope_SSB_TC, 'r', t1, envelope_SSB_TC, 'r', 'Linewidth', 1.5);
 title('Received Message with Envelope Detection');
 xlabel('Time (s)');
 ylabel('Amplitude');
 legend('SSB-TC', 'Envelope');
 ylim([-5 5]);
 xlim([3 3.5]);
-% Spectrum of received signal
-Y_SSB_TC = fftshift(fft(SSB_TC));
-f_SSB_TC = linspace(-new_fs/2, new_fs/2, length(Y_SSB_TC));
 
-figure;
-plot(f_SSB_TC, abs(Y_SSB_TC));
-title('Spectrum of Received SSB-TC Signal');
-xlabel('Frequency (Hz)');
-ylabel('Magnitude');
+envelope_SSB_TC = resample(envelope_SSB_TC, new_fs, fs);
+sound(abs(envelope_SSB_TC), fs);
